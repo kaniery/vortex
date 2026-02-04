@@ -4,7 +4,7 @@
 	let floatingKeywords = $state<{ text: string, style: string }[]>([]);
 
 	onMount(() => {
-		floatingKeywords = keywords.map(word => ({
+		floatingKeywords = keywords.map((word: string) => ({
 			text: word,
 			// インラインスタイルには「座標」と「時間」のプロパティだけを渡す
 			style: `
