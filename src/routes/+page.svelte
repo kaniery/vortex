@@ -9,7 +9,6 @@
 		id: string;
 		role: 'user' | 'ai';
 		text: string;
-		type: 'response' | 'anticipation' | 'inspiration';
 		time: string;
 	}
 	// --- 状態管理 (Svelte 5) ---
@@ -23,10 +22,10 @@
 	// スレッドごとのメッセージ（IDをキーにしたオブジェクト）
 	let allMessages = $state<Record<string, Message[]>>({
 		'1': [
-			{ id: 'm1', role: 'ai', text: "ここは「源流」です。最初のアイデアを書いてください。", type: "response", time: "10:00" }
+			{ id: 'm1', role: 'ai', text: "ここは「源流」です。最初のアイデアを書いてください。" , time: "10:00" }
 		],
 		'2': [
-			{ id: 'm2', role: 'ai', text: "デザインについて語りましょう。", type: "inspiration", time: "11:00" }
+			{ id: 'm2', role: 'ai', text: "デザインについて語りましょう。" , time: "11:00" }
 		]
 	});
 
@@ -35,22 +34,29 @@
 	// 現在アクティブなスレッドのメッセージを抽出（派生状態）
 	let activeThreadId = $derived(pages.find(p => p.active)?.id || '1');
 	let currentMessages = $derived(allMessages[activeThreadId] || []);
+	let inputText = $state(""); // 入力文字列を親で持つ
 
 	// --- ハンドラー ---
 
-	function handleSend(text: string, type: Message['type']) {
-		// ここで : Message と型を指定するのがポイントです
+	function handleKeywordSelect(word: string) {
+		// すでに入力がある場合はスペースを空けて追記
+		if (inputText) {
+			inputText += ` #${word} `;
+		} else {
+			inputText = `#${word} `;
+		}
+	}
+
+	function handleSend(text: string) {
 		const newMessage: Message = { 
 			id: crypto.randomUUID(), 
-			role: 'user', // これで TypeScript は「Message型のrole」だと確信します
+			role: 'user', 
 			text, 
-			type, 
 			time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
 		};
 		
-		// スレッドが存在しない場合の安全策を含めた更新
-		const currentMessages = allMessages[activeThreadId] || [];
-		allMessages[activeThreadId] = [...currentMessages, newMessage];
+		allMessages[activeThreadId] = [...(allMessages[activeThreadId] || []), newMessage];
+		// 送信後の inputText = "" は ChatInput 側で行われるのでここでは不要
 	}
 
 	function handleSelectPage(id: string) {
@@ -60,27 +66,36 @@
 	function handleCreatePage() {
 		const newId = crypto.randomUUID();
 		pages = [...pages.map(p => ({ ...p, active: false })), { id: newId, title: '新しい思考', icon: '🌱', active: true }];
-		allMessages[newId] = [{ id: crypto.randomUUID(), role: 'ai', text: "新しいスレッドが立ち上がりました。", type: "response", time: "Now" }];
+		allMessages[newId] = [{ id: crypto.randomUUID(), role: 'ai', text: "新しいスレッドが立ち上がりました。", time: "Now" }];
 	}
 </script>
 
-<div class="flex h-screen w-full bg-[#050507] text-slate-300 antialiased overflow-hidden font-sans">
-	<FloatingKeywords keywords={rawKeywords} />
-	
-	<main class="flex-1 flex flex-col min-w-0 bg-[#050507]">
-		<header class="h-16 flex items-center px-8 border-b border-white/5 bg-[#050507]/50 backdrop-blur-md">
-			<span class="text-xs font-bold tracking-widest text-slate-500 uppercase">
-				{pages.find(p => p.active)?.title}
-			</span>
-		</header>
-		
-		<ChatStream messages={currentMessages} />
-		<ChatInput onSend={handleSend} />
-	</main>
+<div class="flex h-screen w-full bg-[#020617] text-slate-300 antialiased overflow-hidden font-sans">
+    
+    <div class="fixed inset-0 bg-gradient-to-b from-[#020617] via-[#020817] to-[#010b13] pointer-events-none"></div>
 
-	<ThreadNav 
-		{pages} 
-		onSelect={handleSelectPage} 
-		onCreate={handleCreatePage} 
-	/>
+    <FloatingKeywords keywords={rawKeywords} onSelect={handleKeywordSelect} />
+    
+    <main class="relative z-10 flex-1 flex flex-col min-w-0 bg-[#020617]/40 backdrop-blur-sm">
+        
+        <header class="h-16 flex items-center px-8 border-b border-blue-500/10 bg-[#020617]/60 backdrop-blur-xl">
+            <span class="text-xs font-bold tracking-widest text-blue-400/80 uppercase">
+                {pages.find(p => p.active)?.title}
+            </span>
+        </header>
+        
+        <div class="flex-1 overflow-y-auto">
+            <ChatStream messages={currentMessages} />
+        </div>
+
+        <div class="p-4 bg-gradient-to-t from-[#020617] to-transparent">
+            <ChatInput onSend={handleSend} bind:text={inputText} />
+        </div>
+    </main>
+
+    <ThreadNav 
+        {pages} 
+        onSelect={handleSelectPage} 
+        onCreate={handleCreatePage} 
+    />
 </div>
