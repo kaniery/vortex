@@ -45,7 +45,7 @@
                         hover:shadow-[0_0_25px_rgba(34,211,238,0.2)] transition-all active:scale-95"
                 style={kw.style}
             >
-                <span class="opacity-40 mr-1 text-cyan-400">#</span>{kw.text}
+                {kw.text}
             </button>
         {/each}
     </div>
