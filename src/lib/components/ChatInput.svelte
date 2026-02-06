@@ -1,13 +1,13 @@
 <script lang="ts">
 	// text を双方向バインド可能にする
 	let { onSend, text = $bindable() } = $props<{ 
-		onSend: (text: string, type: 'response' | 'anticipation' | 'inspiration') => void,
+		onSend: (text: string) => void,
 		text: string 
 	}>();
 
-	function handleSend(type: 'response' | 'anticipation' | 'inspiration') {
+	function handleSend() {
 		if (!text.trim()) return;
-		onSend(text, type);
+		onSend(text);
 		text = ""; // 送信後クリア
 	}
 </script>
@@ -17,7 +17,7 @@
 		<div class="relative flex items-center bg-white/[0.05] border border-white/10 rounded-2xl p-2 focus-within:border-indigo-500/50">
 			<input 
 				bind:value={text} 
-				onkeydown={(e) => e.key === 'Enter' && handleSend('response')} 
+				onkeydown={(e) => e.key === 'Enter' && handleSend()} 
 				placeholder="思考を投下..." 
 				class="flex-1 bg-transparent border-none px-4 py-2 text-sm outline-none" 
 			/>

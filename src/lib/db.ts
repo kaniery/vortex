@@ -5,7 +5,6 @@ import { supabase } from './supabase';
 export interface Thread {
     id: string;
     title: string;
-    icon: string;
     active: boolean;
 }
 
@@ -32,10 +31,10 @@ export const db = {
     },
 
     // 新しいスレッドを作成
-    async createThread(title: string, icon: string = '🌱'): Promise<Thread | null> {
+    async createThread(title: string): Promise<Thread | null> {
         const { data, error } = await supabase
             .from('threads')
-            .insert([{ title, icon }])
+            .insert([{ title }])
             .select()
             .single();
         
